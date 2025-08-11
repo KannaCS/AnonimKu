@@ -1,36 +1,185 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AnonimKu - Anonymous Chat Application
 
-## Getting Started
+AnonimKu is a modern anonymous chat application where strangers can connect and chat without revealing their identities initially. Users can choose to reveal their profiles when they feel comfortable, but only with mutual consent.
 
-First, run the development server:
+## Features
+
+- **Anonymous Matching**: Users are matched with strangers without seeing each other's profiles
+- **Real-time Messaging**: Instant messaging with live updates
+- **Profile Reveal System**: Mutual consent required before profiles are revealed
+- **Phone Authentication**: Simple authentication using name and phone number
+- **Responsive Design**: Works seamlessly on mobile and desktop devices
+- **Secure**: Built with privacy and security in mind
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Authentication**: NextAuth.js
+- **Database**: Supabase (PostgreSQL)
+- **Real-time**: Supabase Realtime
+- **UI Icons**: Lucide React
+
+## Setup Instructions
+
+### 1. Prerequisites
+
+- Node.js 18+ installed
+- A Supabase account and project
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-nextauth-secret-key
+
+# Socket.IO Configuration (optional)
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+```
+
+### 3. Database Setup
+
+1. Go to your Supabase project dashboard
+2. Navigate to the SQL Editor
+3. Run the SQL script from `supabase/schema.sql` to create all tables and functions
+
+### 4. Install Dependencies
+
+```bash
+npm install
+```
+
+### 5. Run the Application
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be available at `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Schema
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The application uses the following main tables:
 
-## Learn More
+- **users**: Store user information (name, phone, online status)
+- **matches**: Track active chat sessions between users
+- **messages**: Store chat messages with timestamps
+- **reveal_requests**: Handle profile reveal requests and responses
 
-To learn more about Next.js, take a look at the following resources:
+## User Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Registration**: User enters name and phone number
+2. **Matching**: System finds another available user to chat with
+3. **Anonymous Chat**: Users chat without seeing each other's profiles
+4. **Profile Reveal**: Either user can request to reveal profiles
+5. **Mutual Consent**: Both users must agree before profiles are shown
+6. **End Chat**: Users can end the chat session anytime
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Routes
 
-## Deploy on Vercel
+- `/api/auth/[...nextauth]` - NextAuth authentication endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key Components
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **SessionProvider**: Manages user authentication state
+- **ErrorBoundary**: Handles application errors gracefully
+- **LoadingSpinner**: Reusable loading indicator component
+
+## Features in Detail
+
+### Authentication
+- Simple phone number based authentication
+- No complex signup process
+- Automatic user creation/update
+
+### Matching System
+- Random matching algorithm
+- Real-time availability checking
+- Prevents users from matching with themselves
+
+### Chat Interface
+- Real-time message delivery
+- Message timestamps
+- Typing indicators (can be added)
+- End chat functionality
+
+### Profile Reveal System
+- Request/accept mechanism
+- Both parties must consent
+- Profiles shown simultaneously
+- Includes name and phone number
+
+## Security Features
+
+- Row Level Security (RLS) enabled on all tables
+- Users can only see their own data and matched conversations
+- Phone number validation
+- Secure session management
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically
+
+### Other Platforms
+
+The application can be deployed to any platform that supports Next.js:
+- Netlify
+- Railway
+- Heroku
+- AWS
+
+## Development
+
+### Running in Development
+
+```bash
+npm run dev
+```
+
+### Building for Production
+
+```bash
+npm run build
+npm run start
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## Privacy & Safety
+
+- User data is stored securely in Supabase
+- Phone numbers are used only for matching and identification
+- No data is shared without user consent
+- Users can end conversations anytime
+- All communications are through the platform only
+
+## Support
+
+For support or questions, please open an issue in the GitHub repository.
+
+## License
+
+This project is licensed under the MIT License.
