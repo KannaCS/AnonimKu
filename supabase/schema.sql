@@ -77,7 +77,7 @@ CREATE TRIGGER update_users_updated_at
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
 
--- Function to find and create matches
+-- Function to find and create matches (run with elevated privileges)
 CREATE OR REPLACE FUNCTION find_match_for_user(user_id UUID)
 RETURNS UUID AS $$
 DECLARE
@@ -86,9 +86,9 @@ DECLARE
 BEGIN
   -- Find a user who is online, not in chat, and not the current user
   SELECT id INTO potential_match_id
-  FROM users 
-  WHERE id != user_id 
-    AND is_online = true 
+  FROM users
+  WHERE id != user_id
+    AND is_online = true
     AND is_in_chat = false
     AND id NOT IN (
       -- Exclude users who already have active matches
@@ -106,8 +106,8 @@ BEGIN
     RETURNING id INTO new_match_id;
 
     -- Update both users to be in chat
-    UPDATE users 
-    SET is_in_chat = true 
+    UPDATE users
+    SET is_in_chat = true
     WHERE id IN (user_id, potential_match_id);
 
     RETURN new_match_id;
@@ -115,7 +115,7 @@ BEGIN
 
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to end a match
 CREATE OR REPLACE FUNCTION end_match(match_id UUID)
@@ -143,10 +143,19 @@ ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reveal_requests ENABLE ROW LEVEL SECURITY;
 
--- Users can only see/update their own profile
+-- Users can see their own full profile
 CREATE POLICY "Users can view own profile" ON users
   FOR SELECT USING (auth.uid() = id);
 
+-- Users can see basic matching info of other users (for matching system)
+CREATE POLICY "Users can view others for matching" ON users
+  FOR SELECT USING (
+    auth.uid() != id AND
+    is_online = true AND
+    is_in_chat = false
+  );
+
+-- Users can update their own profile
 CREATE POLICY "Users can update own profile" ON users
   FOR UPDATE USING (auth.uid() = id);
 
