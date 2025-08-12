@@ -55,6 +55,57 @@ export default function ChatPage({ params: paramsPromise }: ChatPageProps) {
     }
   }, [status, session, params.matchId])
 
+  const loadMatchData = async () => {
+    if (!session?.user?.id) return
+
+    try {
+      setLoading(true)
+      
+      // Load match details
+      const { data: matchData, error: matchError } = await dbFunctions.getActiveMatch(session.user.id)
+      
+      if (matchError || !matchData || matchData.id !== params.matchId) {
+        router.push('/dashboard')
+        return
+      }
+
+      setMatch(matchData)
+
+      // Determine partner user
+      const partner = matchData.user1_id === session.user.id ? matchData.user2 : matchData.user1
+      setPartnerUser(partner)
+
+      // Load messages
+      const { data: messagesData, error: messagesError } = await dbFunctions.getMessages(params.matchId)
+      
+      if (!messagesError && messagesData) {
+        setMessages(messagesData)
+      }
+
+      // Load pending reveal requests
+      const { data: revealData, error: revealError } = await dbFunctions.getPendingRevealRequests(session.user.id)
+      
+      if (!revealError && revealData) {
+        setRevealRequests(revealData.filter(req => req.match_id === params.matchId))
+      }
+
+    } catch (error) {
+      console.error('Error loading match data:', error)
+      router.push('/dashboard')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadRevealRequests = async () => {
+    if (!session?.user?.id) return
+
+    const { data, error } = await dbFunctions.getPendingRevealRequests(session.user.id)
+    if (!error && data) {
+      setRevealRequests(data.filter(req => req.match_id === params.matchId))
+    }
+  }
+
   // Page entrance animations
   useEffect(() => {
     if (loading || !match) return
@@ -277,7 +328,7 @@ export default function ChatPage({ params: paramsPromise }: ChatPageProps) {
       supabase.removeChannel(revealChannel)
       supabase.removeChannel(matchChannel)
     }
-  }, [session?.user?.id, params.matchId])
+  }, [session?.user?.id, params.matchId, loadMatchData, loadRevealRequests])
 
   useEffect(() => {
     scrollToBottom()
@@ -285,57 +336,6 @@ export default function ChatPage({ params: paramsPromise }: ChatPageProps) {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  const loadMatchData = async () => {
-    if (!session?.user?.id) return
-
-    try {
-      setLoading(true)
-      
-      // Load match details
-      const { data: matchData, error: matchError } = await dbFunctions.getActiveMatch(session.user.id)
-      
-      if (matchError || !matchData || matchData.id !== params.matchId) {
-        router.push('/dashboard')
-        return
-      }
-
-      setMatch(matchData)
-
-      // Determine partner user
-      const partner = matchData.user1_id === session.user.id ? matchData.user2 : matchData.user1
-      setPartnerUser(partner)
-
-      // Load messages
-      const { data: messagesData, error: messagesError } = await dbFunctions.getMessages(params.matchId)
-      
-      if (!messagesError && messagesData) {
-        setMessages(messagesData)
-      }
-
-      // Load pending reveal requests
-      const { data: revealData, error: revealError } = await dbFunctions.getPendingRevealRequests(session.user.id)
-      
-      if (!revealError && revealData) {
-        setRevealRequests(revealData.filter(req => req.match_id === params.matchId))
-      }
-
-    } catch (error) {
-      console.error('Error loading match data:', error)
-      router.push('/dashboard')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadRevealRequests = async () => {
-    if (!session?.user?.id) return
-
-    const { data, error } = await dbFunctions.getPendingRevealRequests(session.user.id)
-    if (!error && data) {
-      setRevealRequests(data.filter(req => req.match_id === params.matchId))
-    }
   }
 
   const sendMessage = async (e: React.FormEvent) => {

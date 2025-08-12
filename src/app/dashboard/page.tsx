@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [isSearching, setIsSearching] = useState(false)
-  const [currentMatch, setCurrentMatch] = useState<Match | null>(null)
   const [error, setError] = useState('')
 
   // Refs for GSAP animations
@@ -25,6 +24,20 @@ export default function DashboardPage() {
   const userCardRef = useRef<HTMLDivElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
   const searchButtonRef = useRef<HTMLButtonElement>(null)
+
+  const checkExistingMatch = async () => {
+    if (!session?.user?.id) return
+
+    try {
+      const { data: match, error } = await dbFunctions.getActiveMatch(session.user.id)
+      if (match && !error) {
+        // Redirect to chat if match exists
+        router.push(`/chat/${match.id}`)
+      }
+    } catch (err) {
+      console.error('Error checking existing match:', err)
+    }
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -88,9 +101,8 @@ export default function DashboardPage() {
     
     try {
       // Get full match details
-      const { data: match } = await dbFunctions.getActiveMatch(session?.user?.id!)
+      const { data: match } = await dbFunctions.getActiveMatch(session?.user?.id || '')
       if (match && match.id === matchId) {
-        setCurrentMatch(match)
         router.push(`/chat/${match.id}`)
       }
     } catch (err) {
@@ -184,21 +196,6 @@ export default function DashboardPage() {
     return () => ctx.revert()
   }, [isSearching])
 
-  const checkExistingMatch = async () => {
-    if (!session?.user?.id) return
-
-    try {
-      const { data: match, error } = await dbFunctions.getActiveMatch(session.user.id)
-      if (match && !error) {
-        setCurrentMatch(match)
-        // Redirect to chat if match exists
-        router.push(`/chat/${match.id}`)
-      }
-    } catch (err) {
-      console.error('Error checking existing match:', err)
-    }
-  }
-
   const startSearching = async () => {
     if (!session?.user?.id) return
 
@@ -245,8 +242,8 @@ export default function DashboardPage() {
       }, 60000)
 
       // Store references for cleanup
-      ;(window as any).activeSearchInterval = searchInterval
-      ;(window as any).activeSearchTimeout = searchTimeout
+      ;(window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchInterval = searchInterval
+      ;(window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchTimeout = searchTimeout
 
     } catch (err) {
       console.error('Error starting search:', err)
@@ -260,13 +257,13 @@ export default function DashboardPage() {
     setError('')
     
     // Clean up any active intervals
-    if ((window as any).activeSearchInterval) {
-      clearInterval((window as any).activeSearchInterval)
-      ;(window as any).activeSearchInterval = null
+    if ((window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchInterval) {
+      clearInterval((window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchInterval)
+      ;(window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchInterval = undefined
     }
-    if ((window as any).activeSearchTimeout) {
-      clearTimeout((window as any).activeSearchTimeout)
-      ;(window as any).activeSearchTimeout = null
+    if ((window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchTimeout) {
+      clearTimeout((window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchTimeout)
+      ;(window as Window & { activeSearchInterval?: NodeJS.Timeout; activeSearchTimeout?: NodeJS.Timeout }).activeSearchTimeout = undefined
     }
     
     if (session?.user?.id) {

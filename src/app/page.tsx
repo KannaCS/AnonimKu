@@ -4,11 +4,11 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { MessageCircle, Users, Shield, Heart, ArrowRight, Sparkles } from 'lucide-react'
+import { Users, Shield, Heart, ArrowRight, Sparkles } from 'lucide-react'
 import { gsap } from 'gsap'
 
 export default function HomePage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
 
   // Refs for GSAP animations
